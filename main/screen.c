@@ -111,10 +111,19 @@ static void rgb_driver_init(void) {
 	SPI_WriteData(0x01);
 	SPI_WriteData(0x00);
 	SPI_WriteData(0x00);
+	SPI_WriteData(0x13);
+	SPI_WriteComm(0xEF);
+	SPI_WriteData(0x08);
+
+	SPI_WriteComm(0xFF);
+	SPI_WriteData(0x77);
+	SPI_WriteData(0x01);
+	SPI_WriteData(0x00);
+	SPI_WriteData(0x00);
 	SPI_WriteData(0x10);
 
 	SPI_WriteComm(0xC0);
-	SPI_WriteData(0x3B); //Scan line	
+	SPI_WriteData(0x3B);//Scan line	
 	SPI_WriteData(0x00);
 
 	SPI_WriteComm(0xC1);
@@ -129,7 +138,7 @@ static void rgb_driver_init(void) {
 	SPI_WriteData(0x10);
 
 	SPI_WriteComm(0xCD);//RGB format
-	SPI_WriteData(0x08);
+	SPI_WriteData(0x08);        //?565???    666??
 
 	SPI_WriteComm(0xB0); // IPS   
 	SPI_WriteData(0x00); // 255 
@@ -348,14 +357,14 @@ static void rgb_driver_init(void) {
 	SPI_WriteComm(0x36);
 	SPI_WriteData(0x00);
 
-	SPI_WriteComm(0x3a);
-	SPI_WriteData(0x66);
+	SPI_WriteComm(0x3A);
+	SPI_WriteData(0x66);  //55/50=16bit(RGB565);66=18bit(RGB666);77?????3AH?=24bit(RGB888)  
 
 	SPI_WriteComm(0x11);
 
 	vTaskDelay(pdMS_TO_TICKS(120));
-
 	SPI_WriteComm(0x29);
+	vTaskDelay(pdMS_TO_TICKS(20));
 }
 
 void qmsd_rgb_spi_init() {
