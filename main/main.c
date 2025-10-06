@@ -1,44 +1,60 @@
-#include <stdio.h>
-#include <string.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "freertos/queue.h"
-#include "rom/gpio.h"
-#include "driver/gpio.h"
-#include "esp_log.h"
-#include "lvgl.h"
-#include "board.h"
-#include "esp_timer.h"
+
+#include "bsp/esp-bsp.h"
 
 #define TAG "MAIN"
 
-static void increase_lvgl_tick(void* arg) {
-    lv_tick_inc(portTICK_PERIOD_MS);
-}
+#define LVGL_TASK_MAX_DELAY_MS 200
+#define LVGL_TASK_MIN_DELAY_MS 1
+#define LVGL_TASK_STACK_SIZE (8 * 1024)
+#define LVGL_TASK_PRIORITY 2
 
-extern void screen_init(void);
+static void lvgl_port_task(void *arg)
+{
+    ESP_LOGI(TAG, "Starting LVGL task");
 
-void lvgl_task(void* arg) {
-    screen_init();
-
-    // Tick interface for LVGL
-    const esp_timer_create_args_t periodic_timer_args = {
-        .callback = increase_lvgl_tick,
-        .name = "periodic_gui"
-    };
-    esp_timer_handle_t periodic_timer;
-    esp_timer_create(&periodic_timer_args, &periodic_timer);
-    esp_timer_start_periodic(periodic_timer, portTICK_PERIOD_MS * 1000);
+    bsp_display_start();
 
     extern void lv_demo_benchmark(void);
     lv_demo_benchmark();
 
-    for (;;) {
-        lv_task_handler();
-        vTaskDelay(pdMS_TO_TICKS(10));
+    ESP_ERROR_CHECK(bsp_display_backlight_on());
+
+    uint32_t task_delay_ms = LVGL_TASK_MAX_DELAY_MS;
+    while (1)
+    {
+        if (bsp_display_lock(-1))
+        {
+            task_delay_ms = lv_timer_handler();
+            bsp_display_unlock();
+        }
+        if (task_delay_ms > LVGL_TASK_MAX_DELAY_MS)
+        {
+            task_delay_ms = LVGL_TASK_MAX_DELAY_MS;
+        }
+        else if (task_delay_ms < LVGL_TASK_MIN_DELAY_MS)
+        {
+            task_delay_ms = LVGL_TASK_MIN_DELAY_MS;
+        }
+        vTaskDelay(pdMS_TO_TICKS(task_delay_ms));
     }
 }
 
-void app_main(void) {
-    xTaskCreatePinnedToCore(lvgl_task, NULL, 8 * 1024, NULL, 5, NULL, 1);
+void app_main(void)
+{
+
+    bsp_led_init();
+
+    bsp_led_rgb_set(0, 0, 255); // Blue
+
+    xTaskCreatePinnedToCore(lvgl_port_task, "LVGL", LVGL_TASK_STACK_SIZE, NULL, LVGL_TASK_PRIORITY, NULL, 1);
+
+    while (1)
+    {
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
 }

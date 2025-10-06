@@ -1,0 +1,25 @@
+version: "0.1.0"
+description: Board Support Package (BSP) for ZX2D10GE01R
+url: https://github.com/wireless-tag-com/zx2d10ge01r-v4848
+
+targets:
+  - esp32s3
+
+tags:
+  - bsp
+  - ZX2D10GE01R
+
+dependencies:
+  idf: ^5.3
+
+  led_strip: ^2
+  
+  espressif/esp_lcd_st7701: ^1
+
+  espressif/esp_lcd_panel_io_additions: ^1
+
+  espressif/esp_lvgl_port: ^2
+
+  espressif/button: ^4
+
+  espressif/knob: ^1

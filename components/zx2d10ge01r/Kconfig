@@ -1,0 +1,54 @@
+menu "Board Support Package"
+
+    config BSP_ERROR_CHECK
+        bool "Enable error check in BSP"
+        default y
+        help
+            Error check assert the application before returning the error code.
+
+    menu "Display"
+        config BSP_LCD_RGB_BOUNCE_BUFFER_HEIGHT
+            int "RGB Bounce buffer height"
+            default 20
+            help
+                Height of bounce buffer. The width of the buffer is the same as that of the LCD.
+        config BSP_LCD_RGB_BUFFER_NUMS
+            int "Set number of frame buffers"
+            default 1
+            range 1 3
+            help
+                Let DPI LCD driver create a specified number of frame-size buffers. Only when it is set to multiple can the avoiding tearing be turned on.
+
+        config BSP_DISPLAY_LVGL_AVOID_TEAR
+            bool "Avoid tearing effect"
+            depends on BSP_LCD_RGB_BUFFER_NUMS > 1
+            default "n"
+            help
+                Avoid tearing effect through LVGL buffer mode and double frame buffers of RGB LCD. This feature is only available for RGB LCD.
+
+        choice BSP_DISPLAY_LVGL_MODE
+            depends on BSP_DISPLAY_LVGL_AVOID_TEAR
+            prompt "Select LVGL buffer mode"
+            default BSP_DISPLAY_LVGL_FULL_REFRESH
+            config BSP_DISPLAY_LVGL_FULL_REFRESH
+                bool "Full refresh"
+            config BSP_DISPLAY_LVGL_DIRECT_MODE
+                bool "Direct mode"
+        endchoice
+
+        config BSP_DISPLAY_BRIGHTNESS_LEDC_CH
+            int "LEDC channel index"
+            default 1
+            range 0 7
+            help
+                LEDC channel is used to generate PWM signal that controls display brightness.
+                Set LEDC index that should be used.
+
+        config BSP_DISPLAY_LVGL_BUF_HEIGHT
+            depends on !BSP_DISPLAY_LVGL_AVOID_TEAR
+            int "LVGL buffer height"
+            default 100
+            help
+                Height of LVGL buffer. The width of the buffer is the same as that of the LCD.
+    endmenu
+endmenu
